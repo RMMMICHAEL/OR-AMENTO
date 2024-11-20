@@ -32,6 +32,9 @@
             font-weight: bold;
             background-color: #f4f4f4;
         }
+        .export-hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -41,7 +44,7 @@
         <thead>
             <tr>
                 <th>Nome dos Ambientes</th>
-                <th>Dias</th>
+                <th class="export-hidden">Dias</th>
                 <th>Horas</th>
                 <th>Valor da Hora (R$)</th>
                 <th>Resultado Final (R$)</th>
@@ -147,6 +150,7 @@
 
         // Função para exportar a tabela em PDF
         function exportToPDF() {
+            toggleExportVisibility(true);
             const element = document.getElementById("calculationTable");
             const options = {
                 margin: 1,
@@ -154,18 +158,26 @@
                 html2canvas: { scale: 2 },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
             };
-            html2pdf().set(options).from(element).save();
+            html2pdf().set(options).from(element).save().then(() => toggleExportVisibility(false));
         }
 
         // Função para exportar a tabela em PNG
         function exportToImage() {
+            toggleExportVisibility(true);
             const element = document.getElementById("calculationTable");
             html2canvas(element).then((canvas) => {
                 const link = document.createElement('a');
                 link.download = 'Orcamento.png';
                 link.href = canvas.toDataURL();
                 link.click();
+                toggleExportVisibility(false);
             });
+        }
+
+        // Função para alternar a visibilidade da coluna "Dias"
+        function toggleExportVisibility(hide) {
+            const elements = document.querySelectorAll(".export-hidden");
+            elements.forEach(el => el.style.display = hide ? "none" : "");
         }
     </script>
 
