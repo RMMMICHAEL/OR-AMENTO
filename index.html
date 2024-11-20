@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tabela de Cálculo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 14px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f4f4f4;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Tabela de Cálculo</h1>
+    <table id="calculationTable">
+        <thead>
+            <tr>
+                <th>Nome dos Ambientes</th>
+                <th>Dias</th>
+                <th>Horas</th>
+                <th>Valor da Hora (R$)</th>
+                <th>Resultado Final (R$)</th>
+                <th>Ação</th>
+            </tr>
+        </thead>
+        <tbody>
+            <!-- Linhas dinâmicas aparecerão aqui -->
+        </tbody>
+        <tfoot>
+            <tr class="total-row">
+                <td colspan="4">Soma Total</td>
+                <td id="totalSum">R$ 0,00</td>
+                <td></td>
+            </tr>
+        </tfoot>
+    </table>
+    <button onclick="addRow()">Adicionar Ambiente</button>
+    <button onclick="exportToPDF()">Salvar em PDF</button>
+    <button onclick="exportToImage()">Salvar em PNG</button>
+
+    <script src="https://cdn.jsdelivr.net/npm/html2pdf.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas"></script>
+
+    <script>
+        const hourlyRate = 45; // Valor fixo da hora
+        const hoursPerDay = 4; // Horas de trabalho por dia
+
+        function addRow() {
+            const table = document.getElementById("calculationTable").getElementsByTagName("tbody")[0];
+            const newRow = table.insertRow();
+
+            // Coluna Nome dos Ambientes
+            const cell1 = newRow.insertCell(0);
+            cell1.contentEditable = "true";
+            cell1.textContent = "Clique para editar";
+
+            // Coluna Dias
+            const cell2 = newRow.insertCell(1);
+            cell2.contentEditable = "true";
+            cell2.textContent = "0";
+
+            // Coluna Horas
+            const cell3 = newRow.insertCell(2);
+            cell3.contentEditable = "true";
+            cell3.textContent = "0";
+
+            // Coluna Valor da Hora
+            const cell4 = newRow.insertCell(3);
+            cell4.textContent = `R$ ${hourlyRate},00`;
+
+            // Coluna Resultado Final
+            const cell5 = newRow.insertCell(4);
+            cell5.textContent = "R$ 0,00";
+
+            // Atualiza as colunas Horas e Resultado Final quando Dias é alterado
+            cell2.addEventListener("input", () => {
+                const days = parseInt(cell2.textContent) || 0;
+                const calculatedHours = days * hoursPerDay;
+                cell3.textContent = calculatedHours;
+                updateResult(cell3, cell5);
+                updateTotalSum();
+            });
+
+            // Atualiza o Resultado Final quando Horas é alterado manualmente
+            cell3.addEventListener("input", () => {
+                updateResult(cell3, cell5);
+                updateTotalSum();
+            });
+
+            // Coluna Ação (Remover)
+            const cell6 = newRow.insertCell(5);
+            const deleteButton = document.createElement("button");
+            deleteButton.textContent = "Remover";
+            deleteButton.onclick = () => {
+                table.deleteRow(newRow.rowIndex - 1);
+                updateTotalSum();
+            };
+            cell6.appendChild(deleteButton);
+
+            updateTotalSum(); // Atualiza o total ao adicionar uma nova linha
+        }
+
+        // Função para calcular o resultado final com base nas horas
+        function updateResult(hoursCell, resultCell) {
+            const hours = parseFloat(hoursCell.textContent) || 0;
+            resultCell.textContent = `R$ ${(hours * hourlyRate).toFixed(2)}`;
+        }
+
+        // Função para calcular a soma total de todos os resultados
+        function updateTotalSum() {
+            const table = document.getElementById("calculationTable").getElementsByTagName("tbody")[0];
+            let totalSum = 0;
+
+            for (const row of table.rows) {
+                const resultCell = row.cells[4];
+                const resultValue = parseFloat(resultCell.textContent.replace("R$", "").replace(",", ".")) || 0;
+                totalSum += resultValue;
+            }
+
+            document.getElementById("totalSum").textContent = `R$ ${totalSum.toFixed(2)}`;
+        }
+
+        // Função para exportar a tabela em PDF
+        function exportToPDF() {
+            const element = document.getElementById("calculationTable");
+            const options = {
+                margin: 1,
+                filename: 'Orcamento.pdf',
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            };
+            html2pdf().set(options).from(element).save();
+        }
+
+        // Função para exportar a tabela em PNG
+        function exportToImage() {
+            const element = document.getElementById("calculationTable");
+            html2canvas(element).then((canvas) => {
+                const link = document.createElement('a');
+                link.download = 'Orcamento.png';
+                link.href = canvas.toDataURL();
+                link.click();
+            });
+        }
+    </script>
+
+</body>
+</html>
